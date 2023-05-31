@@ -1,0 +1,78 @@
+//DistinctSubsequence //23/5/31
+
+public class X115_DistinctSubsequence {
+    public static void main(String[] args){
+        String s = "rabbbit"; //babgbag
+        String t = "rabbit"; //bag
+        System.out.println(new SolutionX115_().numDistinct(s,t));
+        System.out.println(new SolutionX115_().numDistinct2(s,t));
+    }
+}
+
+/** s = rabbbit;   t = rabbit; s的所有子序列中最多有几个t;   int n = |s|, m = |t|;
+ * f(i,j) 【i,j为字符串的长度 (0<=i<=n, 0<=j<=m)】
+ * f(i,j) := 状态为|s|=i,|t|=j时,最多能找到几个match。(即从s[0,i-1]中最多能找到几个t[0,j-1]; 这里的i,j为字符串下标)
+ * 子问题f(i,j-1),f(i-1,j),f(i-1,j-1); //f(i,j-1)仍有疑问
+ * 【思考1】
+ * 考虑最后一位，组合即等/不等；
+ * s[i] != t[j] : 因为要匹配t所以如果不等那么s[i]就没有任何意义了，此时就看f(i-1,j)，所以此时f(i,j)=f(i-1,j);
+ * s[i] == t[j] : 这时又存在组合选/不选; { 选：那么就match了一位，此时就看f(i-1,j-1)了; 所以不选: f(i,j)=f(i-1,j-1);
+ *                                                             不选： 把s[i]仍掉，此时就看f(i-1,j)了; 所以选: f(i,j)=f(i-1,j); }
+ *                                                          由于是计数，所以s[i]==t[j]时f(i,j)=把选和不选两种情况加起来;
+ * f(i,j) = { f(i-1,j)              ,  if s[i] != t[j];
+ *             f(i-1,j)+f(i-1,j-1),  if s[i]==t[j]; }
+ *baseCase: { f(0,j): s为空串,t为非空串,显然匹配数为0;
+ *                   f(i,0): s为非空串,t为空串, 用一个tiny例子：s=ab, t=b; 结果是1->{ s=a,t=b;  -> s=空,t=b; =>f(0,j)=0;
+ *                                                                                                                          s=a,t=空; =>f(i,0)=1; }
+ *                                                          同理，再举个s=a,t=a易得f(0,0)=1;}
+ * 即baseCase: f(0,j)=0; f(i,0)=1; f(0,0)=1;
+ *原问题：f(n,m)
+ *
+ * 【*思考2】
+ * 从【最后一步】的匹配进行分析，包含两类决策：
+ * [1] s[i]没有参与匹配。
+ *      即s[0,i-1]去匹配了t[0,j]，匹配值即f(i-1,j);
+ * [2] s[i]参与了匹配。
+ *      s[i]参与了匹配当且仅当s[i]=t[j]。
+ *      即s[0,i-1]去匹配了t[0,j-1]，匹配值即f(i-1,j-1);
+ *f(i,j)其实和思考1的是一样的；
+ *
+ *【思考3】[0-1背包]
+ *
+ */
+
+class SolutionX115_{
+    public int numDistinct(String s, String t){
+        int n = s.length(), m = t.length();
+        int[][] dp = new int[n+1][m+1];
+        for(int i = 0; i <= n; i++) dp[i][0] = 1;
+        for(int i = 1; i <= n; i++){
+            for(int j = 1; j <= m; j++){
+                if(s.charAt(i-1) != t.charAt(j-1)){
+                    dp[i][j] = dp[i-1][j];
+                }else{
+                    dp[i][j] = dp[i-1][j] + dp[i-1][j-1];
+                }
+            }
+        }
+        return dp[n][m];
+    }
+
+
+    /**空间优化，一行倒着填*/
+    public int numDistinct2(String s, String t){
+        int n = s.length(), m = t.length();
+        int[] dp = new int[m+1];
+        dp[0] = 1;
+        for(int i = 1; i <= n; i++){
+            for(int j = m; j >= 1; j--){
+                if(s.charAt(i-1) != t.charAt(j-1)){
+                    dp[j] = dp[j];
+                }else{
+                    dp[j] = dp[j] + dp[j-1];
+                }
+            }
+        }
+        return dp[m];
+    }
+}
